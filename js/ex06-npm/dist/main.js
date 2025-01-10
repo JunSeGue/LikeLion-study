@@ -1,0 +1,1 @@
+(()=>{"use strict";console.log("hello npm"),console.log(function(o=0,n=0){return o+n}(2,3)),console.log(function(o=0,n=0){return o-n}(2,3))})();
