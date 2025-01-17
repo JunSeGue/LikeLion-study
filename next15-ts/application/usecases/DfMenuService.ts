@@ -1,6 +1,6 @@
-import { Menu } from "@/entities/Menu";
+import { Menu } from "@/domain/entities/Menu";
 import { MenuListModel } from "@/models/MenuListModel";
-import { SbMenuRepository } from "@/repositories/SMenuRepository";
+import { SbMenuRepository } from "@/infrastructure/repositories/SMenuRepository";
 
 export class DfMenuService {
     
