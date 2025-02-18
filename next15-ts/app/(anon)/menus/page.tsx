@@ -1,84 +1,42 @@
-"use client";
-
 import styles from "./page.module.scss";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MenuListDto } from "@/application/usecases/menu/dto/MenuListDto";
-import { Menu, useBasketStore } from "@/stores/basketStroe";
 import FilterForm from "./components/filter-form";
-import Pager from "./components/pager";
 
-const List = () => {
-  const [listData, setListData] = useState<MenuListDto>();
-  const [isLoading, setIsLoading] = useState(true);
-  const addItemToBasket = useBasketStore((state) => state.addItem); // 장바구니에 아이템 추가 함수 가져오기
+const List = async ({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ params: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) => {
+  const query = await searchParams;
+  
+  const queryObject = {
+    categoryId:query.c,
+    searchWord: query.s,
+  }
 
-  useEffect(() => {
-    const fetchMenus = async () => {
-      setIsLoading(true);
+  let queryString = "";
+  if(query.c)
+    queryString = `?c=${query.c}`;
+  if(query.s)
+    queryString = `?keyword=${query.s}`;
 
-      try {
-        const res = await fetch("/api/menus");
-        const data = await res.json();
-        setListData(data);
-      } catch (error) {
-        console.error("Error fetching menus:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    fetchMenus();
-  }, []);
 
-  const searchHandler = async (keyword: string) => {
-    setIsLoading(true);
-
-    try {
-      const res = await fetch(`/api/menus?keyword=${keyword}`);
-      const data = await res.json();
-      setListData(data);
-    } catch (error) {
-      console.error("Error fetching menus:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddToBasket = (menu: Menu) => {
-    addItemToBasket(menu); // basketStore의 addItem 함수 호출
-    // alert(`${menu.korName}이(가) 장바구니에 추가되었습니다.`);
-  };
-
-  const handleCategoryChange = async (categoryId: number) => {
-    setIsLoading(true);
-
-    try {
-      const url =
-        categoryId === 0 ? "/api/menus" : `/api/menus?c=${categoryId}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      setListData(data);
-    } catch (error) {
-      console.error("Error fetching menus by category:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const res = await fetch(`http://localhost:3000/api/menus${queryString}`);
+  
+  const data: MenuListDto = await res.json();
 
   return (
     <main>
-      {isLoading ? <div>Loading...</div> : <></>}
-      <FilterForm
-        onSearch={searchHandler}
-        onCategoryChange={handleCategoryChange}
-      />
+      <FilterForm query ={queryObject}/>
       <div className={styles["menus-box"]}>
         <section className={styles["menus"]}>
           <h1 className="d:none">메뉴 목록</h1>
           <div className={styles["list"]}>
-            {listData?.menus.map((m) => (
+            {data?.menus.map((m) => (
               <section key={m.id} className={styles["menu-card"]}>
                 <div className={styles["img-box"]}>
                   <Link href={`menus/${m.id}`}>
@@ -106,12 +64,6 @@ const List = () => {
                     <span>12</span>
                   </div>
                   <div className={styles["pay"]}>
-                    <button
-                      className="n-icon n-icon:shopping_cart n-btn n-btn:rounded n-btn-color:main"
-                      onClick={() => handleAddToBasket({ ...m, amount: 1 })} // 버튼 클릭 시 장바구니에 추가
-                    >
-                      장바구니에 담기
-                    </button>
                     <button className="n-icon n-icon:credit_card n-btn n-btn:rounded n-btn-color:sub">
                       주문하기
                     </button>
@@ -121,14 +73,6 @@ const List = () => {
             ))}
           </div>
         </section>
-        {listData && (
-          <Pager
-            totalPages={listData.totalPages}
-            hasPreviousPage={listData.hasPreviousPage}
-            hasNextPage={listData.hasNextPage}
-            pages={listData.pages}
-          />
-        )}
       </div>
     </main>
   );
